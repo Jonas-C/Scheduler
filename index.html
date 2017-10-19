@@ -1,0 +1,204 @@
+<html lang= "en">
+<head>
+	<meta charset= "UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Scheduler</title>
+  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+html {
+	height: 100%;
+}
+table {
+	width: 100%;
+	height: 100%;
+	border-spacing: 0px;
+}
+.table {
+	background-color: #d3d3d3;
+	position: absolute;
+	z-index: 0;
+}
+td, th {
+	background-color: #fff;
+	cursor: pointer;
+	height: 100%;
+	border: 1px solid #d3d3d3;
+}
+
+.hour {
+	width: 5%;
+	cursor: auto;
+}
+
+.weekday {
+	width: 13%;
+	height: 50px;
+	cursor: auto;
+	background-color: #fff;
+}
+
+.lectureStart, .lectureEnd {
+	opacity: 0.5;
+}
+
+.td:hover {
+	opacity: 0.5;
+
+}
+#modal{
+	display: none;
+	position: relative;
+	z-index: 100;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.4);
+}
+.modalContent {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+#optionMenu {
+
+}
+#optionMenu:hover, focus {
+	opacity: 0.5;
+}
+
+.dropdownContent {
+	display: none;
+	position: absolute;
+	z-index: 100;
+}
+.active {
+	display: block;
+}
+
+.td {
+	table-layout: fixed;
+}
+</style>
+<body>
+<div id= "schedule"></div>
+<div id= "modal">
+	<div class= "modalContent">
+		<span class= "close">&times;</span>
+		<h1>Lag nytt foredrag</h1>
+		<select id= 'chooseSubject'>
+			<option value= "Menneske-Maskin-Interaksjon">Menneske-Maskin-Interaksjon</option>
+			<option value= "Programmering">Programmering</option>
+			<option value= "Systemutvikling">Systemutvikling</option>
+		</select>
+		<div id= "startDiv"></div>
+		<div id= "endDiv"></div>
+		<div class = "buttons"></div>
+			<button type= "button" class= "button" id = 'updateTable'>Fullfør</button>
+			<button type= "button" class= "button" id = "cancelModal">Avbryt</button>
+	</div>
+</div>
+
+</body>
+<script>
+	//Kunne vært en ide å legge en tabell til oppå den eksisterende tabellen. Man klikker på den første for å redigere og resultatet blir lagt på den andre som får display: block;
+	//Mulig å bruke display: none; istedet for $.remove også.
+	var startTime = '';
+	var endTime = '';
+	function createDropdown(value, name, currentValue, selectName){
+		var dropdown = '<select id="' + selectName + '">';
+		value = parseInt(value);
+		var newValue = value;
+		var length = 130 - (Math.floor(value / 10) * 10);
+		for(var i = 0; i <= length/10; i++){
+			if(newValue == currentValue){
+				dropdown+= '<option value="'+ newValue +'" selected>' + $('#' + newValue + '').closest('tr').find(name).text() + '</option>';
+			}
+			else{
+				dropdown+= '<option value="'+ newValue +'">' + $('#' + newValue + '').closest('tr').find(name).text() + '</option>';
+			}
+			newValue+=10;
+
+		}
+		dropdown+= '</select>';
+		return dropdown;
+	}
+
+	function createWeek(){
+		var time = 8;
+		var timeMin = 30;
+		var timeMin2 = 15;
+		var table = '<table class = "table"><tr><th id= optionMenu>&#9776;<div class= "dropdownContent"><p>1</p><p>2</p><p>3</p></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
+		for(var i = 1; i < 14; i++){
+			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p>' + i + '<br><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
+			for(var j = 1; j < 8; j++){
+				table+='<td class= "td" id="'+ (i + '' + j) +'"><table class= "nestedTable"><tr id= "nestedTR'+ (i + '' + j) +'"></tr></table></td>';
+			}
+			time++;
+			table+= '</tr>';
+		}
+		table+= '</table>';
+
+		return table;
+	}
+
+	$('#schedule').html(createWeek());
+	$(document).ready(function(){
+		$(".td").click(function(){
+			$("#modal").css('display', 'block');
+			$("#startDiv").html(createDropdown($(this).attr('id'), '.lectureStart', $(this).closest('tr').find(".lectureStart").text(), 'start'));
+			$("#endDiv").html(createDropdown($(this).attr('id'), '.lectureEnd', $(this).closest('tr').find(".lectureStart").text(), 'end'));			
+			$("#startValue").attr('value', $(this).closest('tr').find(".lectureStart").text());
+			$("#endValue").attr('value', $(this).closest('tr').find(".lectureEnd").text());
+			$(".close").click(function(){
+				$("#modal").css('display', 'none');
+			});
+		});
+		$('#updateTable').click(function(){
+			var chosenSubject = $('#chooseSubject').val();
+			var startVal = parseInt($('#start').val());
+			var endVal = parseInt($('#end').val());
+			var count = 0;
+			for(var i = startVal; i <= endVal; i+=10){
+				count++;
+			}
+			var help = 10;
+			while(startVal + help < endVal + 1){
+				$('#'+(startVal+help)+'').remove();
+				help+=10;
+			}
+			if($('#'+startVal+'').attr('rowSpan') == undefined){
+				$('#'+startVal+'').attr('rowSpan', count);
+			}
+			else if(count > $('#'+startVal+'').attr('rowSpan')){
+				$('#'+startVal+'').attr('rowSpan', count);
+			}
+			$('<td class= "nestedTD" id= "nestedTD'+startVal+chosenSubject+'">'+chosenSubject+'</td>').appendTo('#nestedTR'+startVal+'').css('background-color', '#add8e6');
+			$('#nestedTD'+startVal+chosenSubject+'').attr('rowSpan', count);
+		});
+		$('#optionMenu').click(function(){
+			$('.dropdownContent').toggleClass('active').focus();
+		});
+		$('#optionMenu').focusout($('.dropdownContent').removeClass('active'));
+	});
+</script>
