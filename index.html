@@ -4,19 +4,25 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Scheduler</title>
   	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  	<link rel="stylesheet" href="chosen_v1.8.2/chosen.css">
+  	<link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
   	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  	<script src= "chosen_v1.8.2/chosen.jquery.min.js"></script>
+  	<script src="jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
 </head>
 <style>
 * {
 	padding: 0;
 	margin: 0;
 }
-html {
+body {
 	height: 100%;
+	width: 100%;
+	position: fixed;
 }
 table {
+	height: 90%;
 	width: 100%;
-	height: 100%;
 	border-spacing: 0px;
 	table-layout: fixed;
 }
@@ -53,7 +59,7 @@ td, th {
 
 #modalLecture{
 	display: none;
-	position: relative;
+	position: absolute;
 	z-index: 2;
 	width: 100%;
 	height: 100%;
@@ -63,7 +69,7 @@ td, th {
 }
 #modalSubject{
 	display: none;
-	position: relative;
+	position: absolute;
 	z-index: 2;
 	width: 100%;
 	height: 100%;
@@ -91,7 +97,7 @@ td, th {
 
 #modalDay {
 	display: none;
-	position: relative;
+	position: absolute;
 	z-index: 2;
 	width: 100%;
 	height: 100%;
@@ -113,24 +119,28 @@ td, th {
     cursor: pointer;
 }
 #optionMenu:hover{
-	opacity: 0.5;
+	background-color: #e6e6e6;
 }
 .dropdownContent {
 	display: none;
 	position: absolute;
+	padding-left: 5px;
 	z-index: 2;
 	background-color: #fff;
 	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-	padding: 12px 16px;
 	min-width: 10%;
 	text-align: left;
 	opacity: 1;
 }
 .dropdownContent a {
-	color: blue;
+	text-decoration: none;
+	color: black;
+	padding: 5px;
+	display: block;
+	font-weight: normal;
 }
-#hover:hover {
-	opacity: 0.5;
+.dropdownContent a:hover{
+	background-color: #f1f1f1;
 }
 .active {
 	display: block;
@@ -168,8 +178,34 @@ td, th {
 	opacity: 1;
 	z-index: 100;
 }
+#calendar {
+	display: inline;
+}
+#datepicker {
+	border-top-left-radius: 25px;
+	border-bottom-left-radius: 25px;
+}
+
+
+#btn {
+	margin-left: -10px;
+}
+#selects {
+	height: 5%;
+
+}
+
 </style>
 <body>
+<div id= "selects">
+<select class= "kull">
+	<option value= "ANVDATA16HA">ANVDATA16HA</option>
+</select>
+<div id= "calendar">
+<input type= "text" id= "datepicker">
+<button type= "button" id= "btn">&#128197;</button>
+</div>
+</div>
 <div id= "schedule"></div>
 <div id= "modalLecture">
 	<div class= "modalContent">
@@ -206,7 +242,6 @@ td, th {
 		</div>
 	</div>
 </div>
-
 </body>
 <script>
 	//Kunne vært en ide å legge en tabell til oppå den eksisterende tabellen. Man klikker på den første for å redigere og resultatet blir lagt på den andre som får display: block;
@@ -231,7 +266,7 @@ td, th {
 		var time = 8;
 		var timeMin = 30;
 		var timeMin2 = 15;
-		var table = '<table class = "table"><tr><th id= optionMenu><span id= "hover">&#9776;</span><div class= "dropdownContent"><p>1</p><p>2</p><p>Logg ut</p></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
+		var table = '<table class = "table"><tr><th id= optionMenu><span id= "hover">&#9776;</span><div class= "dropdownContent"><a href="#">Min Profil</a><a href= "#">Logg ut</a></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
 		for(var i = 1; i < 14; i++){
 			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p>' + i + '<br><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
 			for(var j = 1; j < 8; j++){
@@ -329,6 +364,8 @@ td, th {
 
 	$('#schedule').html(createWeek());
 	$(document).ready(function(){
+		$('.kull').chosen({width: '20%'});
+		$('#datepicker').datepicker();
 		$(".td").click(function(){
 			$("#modalLecture").css('display', 'block');
 			$('#createLectures').html(createLectureDropDown(subjects));
