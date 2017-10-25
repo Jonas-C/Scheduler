@@ -13,38 +13,47 @@
 <style>
 * {
 	padding: 0;
-	margin: 0;
+	margin: 0;	
 }
-body {
+html, body, .master {
 	height: 100%;
 	width: 100%;
-	position: fixed;
 }
 table {
-	height: 90%;
 	width: 100%;
-	border-spacing: 0px;
+	height: 50%;
+	border-spacing: 0;
 	table-layout: fixed;
+}
+#schedule {
+	height: 75%;
+	padding: 5px;
+	width: 99%;
+	position: absolute;
 }
 .table {
 	background-color: #d3d3d3;
-	position: absolute;
 	z-index: 0;
 }
 td, th {
 	background-color: #fff;
 	cursor: pointer;
-	height: 100%;
 	border: 1px solid #d3d3d3;
+}
+
+th {
+	max-height: 5%;
+	height: 4%;
 }
 
 .hour {
 	cursor: auto;
+	height: 5%;
+	overflow: hidden;
 }
 
 .weekday {
 	width: 13%;
-	height: 50px;
 	cursor: auto;
 	background-color: #fff;
 }
@@ -178,6 +187,9 @@ td, th {
 	opacity: 1;
 	z-index: 100;
 }
+.nestedTable {
+	height: 100%;
+}
 #calendar {
 	display: inline;
 }
@@ -191,12 +203,13 @@ td, th {
 	margin-left: -10px;
 }
 #selects {
-	height: 5%;
+	
 
 }
 
 </style>
 <body>
+<div class= "master">
 <div id= "selects">
 <select class= "kull">
 	<option value= "ANVDATA16HA">ANVDATA16HA</option>
@@ -242,7 +255,9 @@ td, th {
 		</div>
 	</div>
 </div>
+</div>
 </body>
+</html>
 <script>
 	//Kunne vært en ide å legge en tabell til oppå den eksisterende tabellen. Man klikker på den første for å redigere og resultatet blir lagt på den andre som får display: block;
 	//Mulig å bruke display: none; istedet for $.remove også.
@@ -268,7 +283,7 @@ td, th {
 		var timeMin2 = 15;
 		var table = '<table class = "table"><tr><th id= optionMenu><span id= "hover">&#9776;</span><div class= "dropdownContent"><a href="#">Min Profil</a><a href= "#">Logg ut</a></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
 		for(var i = 1; i < 14; i++){
-			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p>' + i + '<br><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
+			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p><p>' + i + '</p><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
 			for(var j = 1; j < 8; j++){
 				table+='<td class= "td" id="'+ (i + '' + j) +'"><table class= "nestedTable" id= "nestedTable'+ (i+'' + j) + '"><tr class= "nestedTR" id= "nestedTR'+(i+''+j)+'"></tr></table></td>';
 			}
