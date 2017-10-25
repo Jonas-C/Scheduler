@@ -18,6 +18,7 @@ table {
 	width: 100%;
 	height: 100%;
 	border-spacing: 0px;
+	table-layout: fixed;
 }
 .table {
 	background-color: #d3d3d3;
@@ -32,7 +33,6 @@ td, th {
 }
 
 .hour {
-	width: 5%;
 	cursor: auto;
 }
 
@@ -43,18 +43,28 @@ td, th {
 	background-color: #fff;
 }
 
+.weekday:hover {
+	cursor: pointer;
+}
+
 .lectureStart, .lectureEnd {
 	opacity: 0.5;
 }
 
-.td:hover {
-	opacity: 0.5;
-
-}
-#modal{
+#modalLecture{
 	display: none;
 	position: relative;
-	z-index: 100;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.4);
+}
+#modalSubject{
+	display: none;
+	position: relative;
+	z-index: 2;
 	width: 100%;
 	height: 100%;
 	overflow: auto;
@@ -64,8 +74,30 @@ td, th {
 .modalContent {
     background-color: #fefefe;
     margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
     width: 80%; /* Could be more or less, depending on screen size */
+}
+
+#subjectContent {
+	padding: 20px;
+}
+
+#lectureContent {
+	padding: 20px;
+}
+
+#dayContent {
+	padding: 20px;
+}
+
+#modalDay {
+	display: none;
+	position: relative;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.4);
 }
 .close {
     color: #aaa;
@@ -80,17 +112,25 @@ td, th {
     text-decoration: none;
     cursor: pointer;
 }
-#optionMenu {
-
-}
-#optionMenu:hover, focus {
+#optionMenu:hover{
 	opacity: 0.5;
 }
-
 .dropdownContent {
 	display: none;
 	position: absolute;
-	z-index: 100;
+	z-index: 2;
+	background-color: #fff;
+	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	padding: 12px 16px;
+	min-width: 10%;
+	text-align: left;
+	opacity: 1;
+}
+.dropdownContent a {
+	color: blue;
+}
+#hover:hover {
+	opacity: 0.5;
 }
 .active {
 	display: block;
@@ -98,24 +138,72 @@ td, th {
 
 .td {
 	table-layout: fixed;
+	z-index: 0;
+}
+
+.hover {
+	opacity: 0.5;
+}
+
+.nestedTR {
+	overflow: hidden;
+}
+
+.nestedTD {
+	text-align: center;
+	overflow: hidden;
+	table-layout: fixed;
+	z-index: 1;
+	border: 0px;
+	opacity: 0.75;
+}
+
+
+.nestedTD:hover {
+	-webkit-transform: scale(1.1);
+	opacity: 1;
+	width: 100%;
+	height: 100%;
+	border: 1px solid black;
+	opacity: 1;
+	z-index: 100;
 }
 </style>
 <body>
 <div id= "schedule"></div>
-<div id= "modal">
+<div id= "modalLecture">
 	<div class= "modalContent">
+		<div id= "lectureContent">
 		<span class= "close">&times;</span>
 		<h1>Lag nytt foredrag</h1>
-		<select id= 'chooseSubject'>
-			<option value= "Menneske-Maskin-Interaksjon">Menneske-Maskin-Interaksjon</option>
-			<option value= "Programmering">Programmering</option>
-			<option value= "Systemutvikling">Systemutvikling</option>
-		</select>
+		<div id= "createLectures"></div>
 		<div id= "startDiv"></div>
 		<div id= "endDiv"></div>
-		<div class = "buttons"></div>
+		<div class = "buttons">
 			<button type= "button" class= "button" id = 'updateTable'>Fullfør</button>
-			<button type= "button" class= "button" id = "cancelModal">Avbryt</button>
+			<button type= "button" class= "button close" id = "cancelModal">Avbryt</button>
+		</div>
+	</div>
+</div>
+</div>
+<div id= "modalSubject">
+	<div class= "modalContent">
+		<div id= "subjectContent">
+		<span class= "close">&times;</span>
+		<h1 id= "subjectName"></h1>
+		<p>Foreleser: <span id= 'lecturer'></span></p>
+		<p>Rom: <span id='room'></span></p>
+		<p>Varighet: <span id= 'timeSpan'></span></p>
+	</div>
+	</div>
+</div>
+<div id= "modalDay">
+	<div class= "modalContent">
+		<div id= "dayContent">
+			<span class= "close">&times;</span>
+			<h1 id= "dayName"></h1>
+			<div id= "dailySubjects"></div>
+		</div>
 	</div>
 </div>
 
@@ -125,6 +213,47 @@ td, th {
 	//Mulig å bruke display: none; istedet for $.remove også.
 	var startTime = '';
 	var endTime = '';
+	var chosenSubject = '';
+	var startVal = '';
+	var endVal = '';
+	var subjectDay = [];
+	function subject(subjectName, lecturer, room){
+		this.subjectName = subjectName;
+		this.lecturer = lecturer;
+		this.room = room;
+	}
+	var programmering = new subject('Programmering', 'Petter Utvikler', 'P35-P170');
+	var systemutvikling = new subject('Systemutvikling', 'Pia Planlegger', 'P32-N002_107');
+	var mmi = new subject('Menneske-Maskin-Interaksjon', 'Con Venient', 'P35-PH322');
+	var subjects = [programmering, systemutvikling, mmi];
+
+	function createWeek(){
+		var time = 8;
+		var timeMin = 30;
+		var timeMin2 = 15;
+		var table = '<table class = "table"><tr><th id= optionMenu><span id= "hover">&#9776;</span><div class= "dropdownContent"><p>1</p><p>2</p><p>Logg ut</p></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
+		for(var i = 1; i < 14; i++){
+			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p>' + i + '<br><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
+			for(var j = 1; j < 8; j++){
+				table+='<td class= "td" id="'+ (i + '' + j) +'"><table class= "nestedTable" id= "nestedTable'+ (i+'' + j) + '"><tr class= "nestedTR" id= "nestedTR'+(i+''+j)+'"></tr></table></td>';
+			}
+			time++;
+			table+= '</tr>';
+		}
+		table+= '</table>';
+
+		return table;
+	}
+
+	function createLectureDropDown(arr){
+		var dropdown = '<select id="chooseSubject">';
+		for(var i = 0; i < arr.length; i++){
+			dropdown += '<option value="' + (i+1) + '">' + arr[i].subjectName + '</option>';
+		}
+		dropdown += '</option>';
+		return dropdown;
+	}
+
 	function createDropdown(value, name, currentValue, selectName){
 		var dropdown = '<select id="' + selectName + '">';
 		value = parseInt(value);
@@ -144,61 +273,144 @@ td, th {
 		return dropdown;
 	}
 
-	function createWeek(){
-		var time = 8;
-		var timeMin = 30;
-		var timeMin2 = 15;
-		var table = '<table class = "table"><tr><th id= optionMenu>&#9776;<div class= "dropdownContent"><p>1</p><p>2</p><p>3</p></div></th><th class= "weekday">Monday</th><th class = "weekday">Tuesday</th><th class= "weekday">Wednesday</th><th class= "weekday">Thursday</th><th class = "weekday">Friday</th><th class= "weekday">Saturday</th><th class= "weekday">Sunday</th></tr>';
-		for(var i = 1; i < 14; i++){
-			table+= '<tr><th class= "hour"><p class= "lectureStart">' +time +':' + timeMin +'</p>' + i + '<br><p class= "lectureEnd">'+ (time+1) + ':' + timeMin2 +'</p></th>';
-			for(var j = 1; j < 8; j++){
-				table+='<td class= "td" id="'+ (i + '' + j) +'"><table class= "nestedTable"><tr id= "nestedTR'+ (i + '' + j) +'"></tr></table></td>';
-			}
-			time++;
-			table+= '</tr>';
+	function chooseColor(subject){
+		var color = '';
+		if(subject == 1){
+			 color = '#ffff00';
 		}
-		table+= '</table>';
+		else if(subject == 2){
+			color = '#009292';
+		}
+		else{
+			color = '#FFA500';
+		}
+		return color;
+	}
 
-		return table;
+	function fillSubjectInfo(subjectName, arr, startTime, endTime){
+		$('#subjectName').html(subjectName);
+		for(var i = 0; i < arr.length; i++){
+			if(arr[i].subjectName == subjectName){
+				$('#lecturer').html(arr[i].lecturer);
+				$('#room').html(arr[i].room);
+				$('#timeSpan').html(startTime + ' -  ' + endTime);
+			}
+		}
+	}
+	function updateCount(){
+		var count = 0;
+		for(var i = startVal; i <= endVal; i+=10){
+			count++;
+		}
+		return count;
+	}
+
+	function removeCells(help){
+		var help = 10;
+		while(startVal + help < endVal + 1){
+			$('#'+(startVal+help)+'').remove();
+			help+=10;
+		}
+	}
+
+	function setRowSpan(count){
+		if($('#'+startVal+'').attr('rowSpan') == undefined){
+			$('#'+startVal+'').attr('rowSpan', count);
+		}
+		else if(count > $('#'+startVal+'').attr('rowSpan')){
+			$('#'+startVal+'').attr('rowSpan', count);
+		}
+	}
+	function getNextValue(target){
+		var newTR = ($('#nestedTable'+target).children('tr').length) +1;
+		$('<tr class= "nestedTR" id= "nestedTR'+target+'_'+newTR+'"></tr>').appendTo('#nestedTable'+target);
+		return '_' + newTR;
 	}
 
 	$('#schedule').html(createWeek());
 	$(document).ready(function(){
 		$(".td").click(function(){
-			$("#modal").css('display', 'block');
+			$("#modalLecture").css('display', 'block');
+			$('#createLectures').html(createLectureDropDown(subjects));
 			$("#startDiv").html(createDropdown($(this).attr('id'), '.lectureStart', $(this).closest('tr').find(".lectureStart").text(), 'start'));
 			$("#endDiv").html(createDropdown($(this).attr('id'), '.lectureEnd', $(this).closest('tr').find(".lectureStart").text(), 'end'));			
 			$("#startValue").attr('value', $(this).closest('tr').find(".lectureStart").text());
 			$("#endValue").attr('value', $(this).closest('tr').find(".lectureEnd").text());
 			$(".close").click(function(){
-				$("#modal").css('display', 'none');
+				$("#modalLecture").hide();
+			});
+
+			$(document).mouseup(function(e){
+				var container = $('#lectureContent');
+
+				if(!container.is(e.target) && container.has(e.target).length === 0){
+					$('#modalLecture').hide();
+				}
+			});
+			
+		});
+		$('.td, .weekday').hover(function(){
+				if($(this).find('.nestedTD').length < 1){
+					$(this).addClass('hover');
+				}
+			},function(){
+				$(this).removeClass('hover');
+			});
+		$('.weekday').click(function(){
+			$('#modalDay').css('display', 'block');
+			$('#dayName').html($(this).text());
+
+			$('.close').click(function(){
+				$('#modalDay').hide();
+			});
+			$(document).mouseup(function(e){
+				var container = $('#dayContent');
+
+				if(!container.is(e.target) && container.has(e.target).length === 0){
+					$('#modalDay').hide();
+				}
 			});
 		});
 		$('#updateTable').click(function(){
-			var chosenSubject = $('#chooseSubject').val();
-			var startVal = parseInt($('#start').val());
-			var endVal = parseInt($('#end').val());
-			var count = 0;
-			for(var i = startVal; i <= endVal; i+=10){
-				count++;
-			}
-			var help = 10;
-			while(startVal + help < endVal + 1){
-				$('#'+(startVal+help)+'').remove();
-				help+=10;
-			}
-			if($('#'+startVal+'').attr('rowSpan') == undefined){
-				$('#'+startVal+'').attr('rowSpan', count);
-			}
-			else if(count > $('#'+startVal+'').attr('rowSpan')){
-				$('#'+startVal+'').attr('rowSpan', count);
-			}
-			$('<td class= "nestedTD" id= "nestedTD'+startVal+chosenSubject+'">'+chosenSubject+'</td>').appendTo('#nestedTR'+startVal+'').css('background-color', '#add8e6');
+			chosenSubject = $('#chooseSubject').val();
+			startVal = parseInt($('#start').val());
+			endVal = parseInt($('#end').val());
+			var count = updateCount();
+			removeCells();
+			setRowSpan(count);
+			$('<td class= "nestedTD" id= "nestedTD'+startVal+chosenSubject+'">'+$('#chooseSubject option:selected').text()+'</td>').appendTo('#nestedTR'+startVal).css('background-color', chooseColor(chosenSubject));
 			$('#nestedTD'+startVal+chosenSubject+'').attr('rowSpan', count);
+			//$('#nestedTR'+startVal+getNextValue(startVal)).css('width', '100%');
+			//$('#nestedTR'+startVal+'').children('td').css('width', 100 / $('#nestedTR'+startVal+'').children('td').length + '%');
+
 		});
-		$('#optionMenu').click(function(){
-			$('.dropdownContent').toggleClass('active').focus();
+		$('.nestedTD').hover(function() {
+			$(this).parent().toggleClass('hover');
 		});
-		$('#optionMenu').focusout($('.dropdownContent').removeClass('active'));
+		$('.nestedTR').click(function(e){
+			e.stopPropagation();
+			$('#modalSubject').css('display', 'block');
+			fillSubjectInfo($(this).text(), subjects, $('#start option:selected').text(), $('#end option:selected').text());
+			$(".close").click(function(){
+				$("#modalSubject").hide();
+			});
+			$(document).mouseup(function(e){
+				var container = $('#subjectContent');
+				if(!container.is(e.target) && container.has(e.target).length === 0){
+					$('#modalSubject').hide();
+				}
+			});
+		});
+		$('#optionMenu').on('click', function(){
+			$('.dropdownContent').toggle();
+		});
+
+		$(document).mouseup(function(e){
+				var container = $('#optionMenu');
+
+				if(!container.is(e.target) && container.has(e.target).length === 0){
+					$('.dropdownContent').hide();
+				}
+			});
 	});
 </script>
