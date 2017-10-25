@@ -211,13 +211,16 @@ th {
 <body>
 <div class= "master">
 <div id= "selects">
+<select id= "searchType">
+	<option value= "forelesning" selected>Forelesning</option>
+	<option value= "foreleser">Foreleser</option>
+	<option value= "rom">Rom</option>
+	<option value= "emne">Emne</option>
+</select>
 <select class= "kull">
 	<option value= "ANVDATA16HA">ANVDATA16HA</option>
 </select>
-<div id= "calendar">
 <input type= "text" id= "datepicker">
-<button type= "button" id= "btn">&#128197;</button>
-</div>
 </div>
 <div id= "schedule"></div>
 <div id= "modalLecture">
@@ -376,11 +379,27 @@ th {
 		$('<tr class= "nestedTR" id= "nestedTR'+target+'_'+newTR+'"></tr>').appendTo('#nestedTable'+target);
 		return '_' + newTR;
 	}
+	function getMonday( date ) {
+	    var day = date.getDay() || 7;  
+	    if( day !== 1 ){ 
+	      date.setHours(-24 * (day - 1));
+	    } 
+	    return date;
+	}
 
 	$('#schedule').html(createWeek());
 	$(document).ready(function(){
+		$('#searchType').chosen({width: '20%'});
+		$('#datepicker').attr('value', getMonday(new Date()));
 		$('.kull').chosen({width: '20%'});
-		$('#datepicker').datepicker();
+		$(function(){
+			$('#datepicker').datepicker({
+				showOn: "button",
+      			buttonImage: "http://jqueryui.com/resources/demos/datepicker/images/calendar.gif",
+      			buttonImageOnly: true,
+      			buttonText: "Select date"
+			});
+		});
 		$(".td").click(function(){
 			$("#modalLecture").css('display', 'block');
 			$('#createLectures').html(createLectureDropDown(subjects));
