@@ -90,6 +90,7 @@ th {
     background-color: #fefefe;
     margin: 15% auto; /* 15% from the top and centered */
     width: 80%; /* Could be more or less, depending on screen size */
+    border-radius: 5px;
 }
 
 #subjectContent {
@@ -379,12 +380,16 @@ th {
 		$('<tr class= "nestedTR" id= "nestedTR'+target+'_'+newTR+'"></tr>').appendTo('#nestedTable'+target);
 		return '_' + newTR;
 	}
+
 	function getMonday( date ) {
 	    var day = date.getDay() || 7;  
 	    if( day !== 1 ){ 
-	      date.setHours(-24 * (day - 1));
+	    	date.setHours(-24 * (day - 1));
+	    	var year = date.getFullYear();
+	    	var month = date.getMonth();
+	    	var newDate = date.getDate();
 	    } 
-	    return date;
+	    return month+1 + '/' + newDate + '/' + year;
 	}
 
 	$('#schedule').html(createWeek());
@@ -458,7 +463,8 @@ th {
 		$('.nestedTD').hover(function() {
 			$(this).parent().toggleClass('hover');
 		});
-		$('.nestedTR').click(function(e){
+		$('.nestedTR').on('click', '.nestedTD', function(e){
+			$(this).attr('id');	
 			e.stopPropagation();
 			$('#modalSubject').css('display', 'block');
 			fillSubjectInfo($(this).text(), subjects, $('#start option:selected').text(), $('#end option:selected').text());
